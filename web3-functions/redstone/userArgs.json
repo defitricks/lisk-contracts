@@ -1,5 +1,9 @@
 {
   "dataServiceId": "redstone-primary-prod",
-  "symbols": ["ETH", "USDT"],
+  "symbols": [
+    "ETH",
+    "LSK",
+    "USDT"
+  ],
   "oracleAddress": "0x858B9Ba5729C599ED12513E7000f0F316b58Afb5"
 }

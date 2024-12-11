@@ -5,7 +5,7 @@ import {
 import { BigNumber, Contract } from "ethers";
 import { arrayify, toUtf8String, formatBytes32String } from "ethers/lib/utils";
 import { WrapperBuilder } from "@redstone-finance/evm-connector";
-import * as redstone from "redstone-protocol";
+import * as redstone from "@redstone-finance/protocol";
 
 const ORACLE_ABI = [
   "function updateDataFeedsValuesPartial(bytes32[]) public",
@@ -15,21 +15,6 @@ const ORACLE_ABI = [
 
 const REDSTONE_PRIMARY_PROD = "redstone-primary-prod";
 const REDSTONE_MAIN_DEMO = "redstone-main-demo";
-// https://github.com/redstone-finance/redstone-oracles-monorepo/blob/main/packages/sdk/src/data-services-urls.ts
-const DEV_GWS = [
-  "https://oracle-gateway-1.b.redstone.vip",
-  "https://oracle-gateway-1.b.redstone.finance",
-  "https://d33trozg86ya9x.cloudfront.net", // https://github.com/gelatodigital/w3f-redstone-poc-v2/blob/main/web3-functions/redstone/index.ts#L32
-];
-const PROD_GWS = [
-  "https://oracle-gateway-1.a.redstone.vip",
-  "https://oracle-gateway-1.a.redstone.finance",
-  "https://oracle-gateway-2.a.redstone.finance",
-];
-const REDSTONE_DATA_SERVICES_URLS: Record<string, string[]> = {
-  REDSTONE_PRIMARY_PROD: PROD_GWS,
-  REDSTONE_MAIN_DEMO: DEV_GWS,
-};
 
 const MIN_DEVIATION = 0.5; // 0.5%
 const MIN_TIME_ELAPSED_HOURS = 6; // 6 hours
@@ -78,26 +63,18 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
   let wrappedOracle;
   switch (dataServiceId) {
     case REDSTONE_PRIMARY_PROD:
-      wrappedOracle = WrapperBuilder.wrap(oracle).usingDataService(
-        {
-          dataServiceId: REDSTONE_PRIMARY_PROD,
-          uniqueSignersCount: 2,
-          dataFeeds: dataFeedIdsString,
-          disablePayloadsDryRun: true,
-        },
-        REDSTONE_DATA_SERVICES_URLS.REDSTONE_PRIMARY_PROD
-      );
+      wrappedOracle = WrapperBuilder.wrap(oracle).usingDataService({
+        dataServiceId: REDSTONE_PRIMARY_PROD,
+        uniqueSignersCount: 2,
+        dataPackagesIds: dataFeedIdsString,
+      });
       break;
     case REDSTONE_MAIN_DEMO:
-      wrappedOracle = WrapperBuilder.wrap(oracle).usingDataService(
-        {
-          dataServiceId: REDSTONE_MAIN_DEMO,
-          uniqueSignersCount: 1,
-          dataFeeds: dataFeedIdsString,
-          disablePayloadsDryRun: true,
-        },
-        REDSTONE_DATA_SERVICES_URLS.REDSTONE_MAIN_DEMO
-      );
+      wrappedOracle = WrapperBuilder.wrap(oracle).usingDataService({
+        dataServiceId: REDSTONE_MAIN_DEMO,
+        uniqueSignersCount: 1,
+        dataPackagesIds: dataFeedIdsString,
+      });
       break;
     default:
       return {
