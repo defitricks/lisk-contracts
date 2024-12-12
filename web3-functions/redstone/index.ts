@@ -3,7 +3,7 @@ import {
   Web3FunctionContext,
 } from "@gelatonetwork/web3-functions-sdk";
 import { BigNumber, Contract } from "ethers";
-import { arrayify, formatBytes32String } from "ethers/lib/utils";
+import { arrayify, formatBytes32String, parseBytes32String } from "ethers/lib/utils";
 import { DataFeed } from "./types";
 import { ORACLE_ABI, Constants } from "./constants";
 import { PriceUtils, RedstoneUtils, LogUtils, TimeUtils } from "./utils";
@@ -84,12 +84,14 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
 
     LogUtils.debug("Stored prices and timestamps:");
     PriceUtils.printPrices(idToDataFeedMap);
-    LogUtils.printSection("Price deviations and time elapsed since last update:");
 
-    // Check price deviations and collect updates
     const currentTimestamp = Date.now();
-    const priceFeedIdsToUpdate: string[] = [];
+    LogUtils.printSection(
+      "Current timestamp: " + currentTimestamp + "\nPrice deviations and time elapsed since last update:"
+    );
 
+    // Check price deviations and collect updates    
+    const priceFeedIdsToUpdate: string[] = [];
     for (const dataFeed of idToDataFeedMap.values()) {
       const deviationPrct = PriceUtils.getPriceDeviationPercent(
         dataFeed.livePrice,
@@ -105,7 +107,7 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
         dataFeed.storedTimestamp
       );
 
-      PriceUtils.printTimestamps(dataFeed, currentTimestamp, timeElapsed);
+      PriceUtils.printTimestamps(dataFeed, timeElapsed);
 
       if (
         deviationPrct >= Constants.MIN_DEVIATION ||
@@ -115,7 +117,9 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
       }
     }
 
-    LogUtils.log("Price feeds to update:", priceFeedIdsToUpdate);
+    LogUtils.log("Price feeds to update:", priceFeedIdsToUpdate.map(id => {
+      return parseBytes32String(id);
+    }));
 
     if (priceFeedIdsToUpdate.length === 0) {
       return {

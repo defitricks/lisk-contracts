@@ -41,11 +41,10 @@ export class PriceUtils {
         }
     }
 
-    static printTimestamps(dataFeed: DataFeed, currentTimestamp: number, timeElapsed: number): void {
+    static printTimestamps(dataFeed: DataFeed, timeElapsed: number): void {
         LogUtils.log(
-            `Current timestamp for ${dataFeed.symbol}: ${currentTimestamp}`,
-            `Stored timestamp for ${dataFeed.symbol}: ${dataFeed.storedTimestamp}`,
-            `Time elapsed since last update for ${dataFeed.symbol} in hours: ${timeElapsed.toFixed(2)}`
+            `Stored timestamp: ${dataFeed.storedTimestamp}`,
+            `Time elapsed: ${timeElapsed.toFixed(2)} hours`
         );
     }
 }
