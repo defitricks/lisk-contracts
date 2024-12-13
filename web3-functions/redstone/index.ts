@@ -3,7 +3,11 @@ import {
   Web3FunctionContext,
 } from "@gelatonetwork/web3-functions-sdk";
 import { BigNumber, Contract } from "ethers";
-import { arrayify, formatBytes32String, parseBytes32String } from "ethers/lib/utils";
+import {
+  arrayify,
+  formatBytes32String,
+  parseBytes32String,
+} from "ethers/lib/utils";
 import { DataFeed } from "./types";
 import { ORACLE_ABI, Constants } from "./constants";
 import { PriceUtils, RedstoneUtils, LogUtils, TimeUtils } from "./utils";
@@ -36,13 +40,16 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
     // Get wrapped oracle based on service ID
     const wrappedOracle = RedstoneUtils.getWrappedOracle(oracle, {
       dataServiceId,
-      uniqueSignersCount: dataServiceId === Constants.REDSTONE_PRIMARY_PROD ? 2 : 1,
-      dataPackagesIds: dataFeedIdsString
+      uniqueSignersCount:
+        dataServiceId === Constants.REDSTONE_PRIMARY_PROD ? 2 : 1,
+      dataPackagesIds: dataFeedIdsString,
     });
 
     // Retrieve live prices
     const { data: livePriceData } =
-      await wrappedOracle.populateTransaction.getLivePricesAndTimestamp(dataFeedIdsBytes32);
+      await wrappedOracle.populateTransaction.getLivePricesAndTimestamp(
+        dataFeedIdsBytes32,
+      );
     const txCalldataBytes = arrayify(String(livePriceData));
 
     const parsingResult = RedstoneUtils.parsePayload(txCalldataBytes);
@@ -51,12 +58,12 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
       RedstoneUtils.printSignedDataPackage(index, signedDataPackage);
 
       const dataFeed = idToDataFeedMap.get(
-        signedDataPackage.dataPackage.dataPoints[0].dataFeedId
+        signedDataPackage.dataPackage.dataPoints[0].dataFeedId,
       );
 
       if (dataFeed && dataFeed.livePrice.eq(0)) {
         dataFeed.livePrice = BigNumber.from(
-          signedDataPackage.dataPackage.dataPoints[0].value
+          signedDataPackage.dataPackage.dataPoints[0].value,
         );
       }
     });
@@ -77,7 +84,9 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
       [dataFeed.storedTimestamp, , dataFeed.storedPrice] = await wrappedOracle
         .getLastUpdateDetails(dataFeed.id)
         .catch(() => {
-          LogUtils.debug(`No stored price found for ${dataFeed.symbol}, using defaults`);
+          LogUtils.debug(
+            `No stored price found for ${dataFeed.symbol}, using defaults`,
+          );
           return [BigNumber.from(0), BigNumber.from(0), BigNumber.from(0)];
         });
     }
@@ -87,24 +96,26 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
 
     const currentTimestamp = Date.now();
     LogUtils.printSection(
-      "Current timestamp: " + currentTimestamp + "\nPrice deviations and time elapsed since last update:"
+      "Current timestamp: " +
+        currentTimestamp +
+        "\nPrice deviations and time elapsed since last update:",
     );
 
-    // Check price deviations and collect updates    
+    // Check price deviations and collect updates
     const priceFeedIdsToUpdate: string[] = [];
     for (const dataFeed of idToDataFeedMap.values()) {
       const deviationPrct = PriceUtils.getPriceDeviationPercent(
         dataFeed.livePrice,
-        dataFeed.storedPrice
+        dataFeed.storedPrice,
       );
 
       LogUtils.log(
-        `Price deviation for ${dataFeed.symbol}: ${deviationPrct.toFixed(2)}%`
+        `Price deviation for ${dataFeed.symbol}: ${deviationPrct.toFixed(2)}%`,
       );
 
       const timeElapsed = TimeUtils.getTimeElapsedHours(
         currentTimestamp,
-        dataFeed.storedTimestamp
+        dataFeed.storedTimestamp,
       );
 
       PriceUtils.printTimestamps(dataFeed, timeElapsed);
@@ -117,9 +128,12 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
       }
     }
 
-    LogUtils.log("Price feeds to update:", priceFeedIdsToUpdate.map(id => {
-      return parseBytes32String(id);
-    }));
+    LogUtils.log(
+      "Price feeds to update:",
+      priceFeedIdsToUpdate.map((id) => {
+        return parseBytes32String(id);
+      }),
+    );
 
     if (priceFeedIdsToUpdate.length === 0) {
       return {
@@ -132,7 +146,7 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
     LogUtils.log("Updating price feeds...");
     const { data: updateDataFeedsPartialData } =
       await wrappedOracle.populateTransaction.updateDataFeedsValuesPartial(
-        priceFeedIdsToUpdate
+        priceFeedIdsToUpdate,
       );
     LogUtils.log(`Transaction data received: ${updateDataFeedsPartialData}`);
 
@@ -143,10 +157,10 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
       ],
     };
   } catch (error) {
-    LogUtils.error('Error in Web3Function execution:', error);
+    LogUtils.error("Error in Web3Function execution:", error);
     return {
       canExec: false,
-      message: `Execution error: ${error.message}`
+      message: `Execution error: ${error.message}`,
     };
   }
 });
