@@ -41,7 +41,9 @@ Web3Function.onRun(async (context: Web3FunctionContext) => {
     const wrappedOracle = RedstoneUtils.getWrappedOracle(oracle, {
       dataServiceId,
       uniqueSignersCount:
-        dataServiceId === Constants.REDSTONE_PRIMARY_PROD ? 2 : 1,
+        dataServiceId === Constants.REDSTONE_PRIMARY_PROD
+          ? Constants.NUM_UNIQUE_SIGNERS_REDSTONE_PRIMARY_PROD
+          : Constants.NUM_UNIQUE_SIGNERS_REDSTONE_MAIN_DEMO,
       dataPackagesIds: dataFeedIdsString,
     });
 

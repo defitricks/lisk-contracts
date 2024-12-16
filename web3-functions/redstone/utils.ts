@@ -3,12 +3,13 @@ import { WrapperBuilder } from "@redstone-finance/evm-connector";
 import * as redstone from "@redstone-finance/protocol";
 import { DataFeed, DataServiceConfig } from "./types";
 import { Constants } from "./constants";
+import { assert } from "@redstone-finance/protocol/dist/src/common/utils";
 
 export class PriceUtils {
   static computePriceDeviation(
-    newPrice: BigNumber,
-    oldPrice: BigNumber,
-    decimals: number,
+    newPrice: Readonly<BigNumber>,
+    oldPrice: Readonly<BigNumber>,
+    decimals: Readonly<number>,
   ): BigNumber {
     try {
       if (oldPrice.eq(0)) {
@@ -26,8 +27,8 @@ export class PriceUtils {
   }
 
   static getPriceDeviationPercent(
-    newPrice: BigNumber,
-    oldPrice: BigNumber,
+    newPrice: Readonly<BigNumber>,
+    oldPrice: Readonly<BigNumber>,
   ): number {
     try {
       const deviation = this.computePriceDeviation(
@@ -37,11 +38,13 @@ export class PriceUtils {
       );
       return (deviation.toNumber() / 10 ** Constants.DECIMALS) * 100;
     } catch (error) {
-      throw new Error(`Failed to calculate price deviation: ${error.message}`);
+      throw new Error(
+        `Failed to calculate price deviation percentage: ${error.message}`,
+      );
     }
   }
 
-  static printPrices(idToDataFeedMap: Map<string, DataFeed>): void {
+  static printPrices(idToDataFeedMap: ReadonlyMap<string, DataFeed>): void {
     for (const dataFeed of idToDataFeedMap.values()) {
       LogUtils.log(
         `Live ${dataFeed.symbol} price: ${dataFeed.livePrice.toString()}`,
@@ -50,7 +53,10 @@ export class PriceUtils {
     }
   }
 
-  static printTimestamps(dataFeed: DataFeed, timeElapsed: number): void {
+  static printTimestamps(
+    dataFeed: Readonly<DataFeed>,
+    timeElapsed: Readonly<number>,
+  ): void {
     LogUtils.log(
       `Stored timestamp: ${dataFeed.storedTimestamp}`,
       `Time elapsed: ${timeElapsed.toFixed(2)} hours`,
@@ -74,8 +80,8 @@ export class RedstoneUtils {
   }
 
   static printSignedDataPackage(
-    dataPackageIndex: number,
-    signedDataPackage: redstone.SignedDataPackage,
+    dataPackageIndex: Readonly<number>,
+    signedDataPackage: Readonly<redstone.SignedDataPackage>,
   ): void {
     LogUtils.debug(
       `Data package: ${dataPackageIndex}`,
@@ -84,42 +90,48 @@ export class RedstoneUtils {
       `Signer address: ${signedDataPackage.recoverSignerAddress()}`,
       `Data points count: ${signedDataPackage.dataPackage.dataPoints.length}`,
       `Data points symbols: ${signedDataPackage.dataPackage.dataPoints.map((dp) => dp.dataFeedId)}`,
-      `Data points values: ${signedDataPackage.dataPackage.dataPoints.map(
-        (dp) => BigNumber.from(dp.value).toString(),
-      )}`,
+      `Data points values: ${signedDataPackage.dataPackage.dataPoints.map((dp) => BigNumber.from(dp.value).toString())}`,
     );
   }
 }
 
 export class LogUtils {
-  static log(...messages: any[]): void {
+  static log(...messages: ReadonlyArray<any>): void {
     console.log(...messages);
   }
 
-  static debug(...messages: any[]): void {
+  static debug(...messages: ReadonlyArray<any>): void {
     if (Constants.DEBUG_MODE) {
       console.log(...messages);
     }
   }
 
-  static error(...messages: any[]): void {
+  static error(...messages: ReadonlyArray<any>): void {
     console.error(...messages);
   }
 
-  static printSection(title: string): void {
-    this.log("-".repeat(72));
+  static printSection(title: Readonly<string>): void {
+    const LINE_WIDTH = 72;
+
+    this.log("-".repeat(LINE_WIDTH));
     this.log(title);
-    this.log("-".repeat(72));
+    this.log("-".repeat(LINE_WIDTH));
   }
 }
 
 export class TimeUtils {
   static getTimeElapsedHours(
-    currentTimestamp: number,
-    previousTimestamp: number,
+    endTimestampInMs: Readonly<number>,
+    startTimestampInMs: Readonly<number>,
   ): number {
     try {
-      return (currentTimestamp - previousTimestamp) / (1000 * 60 * 60);
+      assert(
+        endTimestampInMs >= startTimestampInMs,
+        `expected endTimestampInMs (${endTimestampInMs}) to be greater than or equal to startTimestampInMs (${startTimestampInMs})`,
+      );
+
+      const HOUR_IN_MS = 1000 * 60 * 60;
+      return (endTimestampInMs - startTimestampInMs) / HOUR_IN_MS;
     } catch (error) {
       throw new Error(`Failed to calculate time elapsed: ${error.message}`);
     }
