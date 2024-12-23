@@ -64,7 +64,7 @@ export async function checkTokenPairPriceUpdateTime(
     currentTimestamp: number
 ) {
     // Initialize the provider
-    const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
 
     // Create a contract instance
     const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, provider);
